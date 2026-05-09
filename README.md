@@ -1,5 +1,7 @@
 # gia evidence finder
 
+[![PyPI](https://img.shields.io/pypi/v/gia-evidence-finder.svg)](https://pypi.org/project/gia-evidence-finder/)
+
 Find source-backed evidence for claims.
 
 `gia evidence finder` extracts the smallest source spans that directly support a
@@ -91,16 +93,95 @@ gia-evidence-finder benchmark-competitors \
 
 ## What It Handles
 
-- Direct source support.
-- Near misses that mention the right topic but do not prove the claim.
-- Negation and contradiction, including negative claims supported by negative
-  source text.
-- Relation binding, where a true attribute belongs to a nearby dependency,
-  product variant, person, organization, or tool rather than the claim subject.
-- Numeric, date, money, duration, percentage, version, and range mismatches.
-- Role-bound quantities such as `started in 2024` and `ended in 2025`.
-- Deterministic abstention when support is absent.
-- Stable span ids, offsets, labels, feature breakdowns, and traceable decisions.
+`gia evidence finder` is not a summarizer and not just semantic retrieval. It
+takes a claim or typed intent, scores source spans, and decides whether each
+candidate is direct support, a near miss, a contradiction, insufficient context,
+or irrelevant.
+
+It handles these evidence patterns:
+
+- **Direct support**: the claim is actually stated by the source.
+  - Claim: `UltraChess is browser-based`.
+  - Source: `UltraChess is a browser-based chess variant playground.`
+  - Result: returns the sentence as `supports`.
+
+- **Smallest useful span extraction**: when a paragraph, section, or heading is
+  related, the extractor still prefers the minimal sentence, bullet, code block,
+  or table row that proves the claim.
+  - Claim: `the quality gate runs ruff, mypy, and pytest`.
+  - Source: `uv run ruff check . && uv run mypy && uv run pytest`.
+  - Result: returns the code span, not the whole README section.
+
+- **Near-miss refusal**: a span can share many words with the claim and still
+  fail to prove it.
+  - Claim: `FastAPI provides automatic interactive docs, not runtime speed`.
+  - Source: `Very high performance, on par with NodeJS and Go.`
+  - Result: labels the speed span as `near_miss`, not support for the docs
+    claim.
+
+- **Contradiction and negation**: the extractor distinguishes positive claims
+  from negative source text, and negative claims from negative support.
+  - Claim: `includes evaluation, search, and an opening book`.
+  - Source: `No evaluation, no search, no opening book.`
+  - Result: labels the span as `contradicts`.
+  - Claim: `has no evaluation, no search, and no opening book`.
+  - Source: `No evaluation, no search, no opening book.`
+  - Result: returns the same span as `supports`.
+
+- **Explicit counterclaims**: if the source says the claim is false and gives
+  the opposite policy, it is a contradiction even when lexical overlap is high.
+  - Claim: `PR discussion forbids open semantic gate diagnostics`.
+  - Source: `PR discussion does not forbid open semantic gate diagnostics; it
+    requires open semantic gate diagnostics.`
+  - Result: labels the span as `contradicts`.
+
+- **Insufficient-context refusal**: the extractor can return the best diagnostic
+  span explaining why a claim is not proven.
+  - Claim: `a dependent library itself provides open semantic gate diagnostics`.
+  - Source: `A dependent library is mentioned near open semantic gate
+    diagnostics, but this does not prove the dependency provides it.`
+  - Result: labels the span as `insufficient_context`.
+
+- **Relation and subject binding**: true facts do not get transferred across
+  nearby entities.
+  - Claim: `Pydantic itself is on par with NodeJS and Go`.
+  - Source: `FastAPI is very high performance, on par with NodeJS and Go, thanks
+    to Starlette and Pydantic.`
+  - Result: abstains because the performance claim belongs to FastAPI, not
+    Pydantic.
+
+- **Source reliability conflicts**: a current or official source can support a
+  claim while an old note, archived note, or outdated blurb is treated as a
+  conflicting diagnostic span.
+  - Claim: `the current spec says open semantic gate diagnostics is required`.
+  - Source: `The current spec says open semantic gate diagnostics is required.`
+  - Conflicting source: `An archived note incorrectly says open semantic gate
+    diagnostics is optional.`
+  - Result: returns the current spec as support and keeps the archived note as a
+    contradiction candidate.
+
+- **Numeric, date, money, duration, percentage, version, and range checks**:
+  semantically similar spans are rejected when the value is wrong.
+  - Claim: `OAuth hardening project was created in 2026`.
+  - Source: `OAuth hardening project was created in 2025.`
+  - Result: labels the source as `contradicts`.
+
+- **Role-bound quantities**: matching numbers are not enough; the number must
+  be attached to the right local role.
+  - Claim: `Project started in 2024 and ended in 2025`.
+  - Source: `Project started in 2025 and ended in 2024.`
+  - Result: labels the swapped dates as `contradicts`.
+  - Claim: `Rent is $3,200 and deposit is $1,000`.
+  - Source: `Rent is $1,000 and deposit is $3,200.`
+  - Result: labels the swapped money roles as `contradicts`.
+
+- **Deterministic abstention**: when no span directly supports the claim, the
+  extractor returns no support matches and keeps ranked diagnostic candidates
+  for review.
+
+- **Traceable outputs**: every `SpanMatch` includes a stable span id, source
+  offsets, label, score, feature breakdown, and reasons so downstream systems
+  can audit why a span was accepted or rejected.
 
 ## Why This Exists
 
