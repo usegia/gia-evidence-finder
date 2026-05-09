@@ -166,6 +166,7 @@ def _report_at_threshold(
     top1_support = 0
     abstain_correct = 0
     decision_correct = 0
+    evidence_decision_correct = 0
     forbidden_top1 = 0
     forbidden_supported_top1 = 0
     diagnostic_top1 = 0
@@ -196,6 +197,13 @@ def _report_at_threshold(
             abstain_case_count += 1
             abstain_correct += int(abstained)
         decision_correct += int(abstained == case.expect_abstain)
+        evidence_decision_correct += int(
+            _threshold_evidence_decision_correct(
+                case,
+                selected_ids=selected_ids,
+                abstained=abstained,
+            )
+        )
         if case.forbidden_top1:
             forbidden_top1 += 1
         if _top_candidate_is_forbidden_support(case, threshold):
@@ -218,6 +226,7 @@ def _report_at_threshold(
         top1_support_accuracy=_round_rate(top1_support, support_case_count),
         abstain_accuracy=_round_rate(abstain_correct, abstain_case_count, empty_value=1.0),
         decision_accuracy=_round_rate(decision_correct, count),
+        evidence_decision_accuracy=_round_rate(evidence_decision_correct, count),
         diagnostic_top1_accuracy=_round_rate(
             diagnostic_top1,
             diagnostic_case_count,
@@ -234,9 +243,12 @@ def _report_at_threshold(
     )
 
 
-def _objective_key(point: CalibrationPoint) -> tuple[float, float, float, float, float, float]:
+def _objective_key(
+    point: CalibrationPoint,
+) -> tuple[float, float, float, float, float, float, float]:
     report = point.report
     return (
+        report.evidence_decision_accuracy,
         report.decision_accuracy,
         report.top1_support_accuracy,
         report.abstain_accuracy,
@@ -244,6 +256,19 @@ def _objective_key(point: CalibrationPoint) -> tuple[float, float, float, float,
         report.mean_reciprocal_rank,
         -point.threshold,
     )
+
+
+def _threshold_evidence_decision_correct(
+    case: CaseEvaluation,
+    *,
+    selected_ids: tuple[str, ...],
+    abstained: bool,
+) -> bool:
+    if case.support_span_ids:
+        return bool(selected_ids and selected_ids[0] in set(case.support_span_ids))
+    if case.expect_abstain:
+        return abstained
+    return not abstained
 
 
 def _top_candidate_is_forbidden_support(case: CaseEvaluation, threshold: float) -> bool:

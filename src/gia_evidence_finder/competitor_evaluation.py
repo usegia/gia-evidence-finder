@@ -302,6 +302,7 @@ def competitor_markdown_report(payload: Mapping[str, Any]) -> str:
                 experiments,
                 (
                     "decision_accuracy",
+                    "evidence_decision_accuracy",
                     "abstain_accuracy",
                     "diagnostic_top1_accuracy",
                     "abstain_diagnostic_top1_accuracy",
@@ -381,6 +382,7 @@ def _experiment_axis_payload(experiment: RankerExperiment) -> dict[str, object]:
             "recall_at_5": report.recall_at_5,
             "top1_support_accuracy": report.top1_support_accuracy,
             "decision_accuracy": report.decision_accuracy,
+            "evidence_decision_accuracy": report.evidence_decision_accuracy,
             "abstain_accuracy": report.abstain_accuracy,
             "diagnostic_top1_accuracy": report.diagnostic_top1_accuracy,
             "abstain_diagnostic_top1_accuracy": report.abstain_diagnostic_top1_accuracy,
@@ -401,6 +403,7 @@ def _experiment_axis_payload(experiment: RankerExperiment) -> dict[str, object]:
             }
             for case in experiment.cases
             if not case.decision_correct
+            or not case.evidence_decision_correct
             or case.forbidden_supported_top1
             or any(item.supported_top1 for item in case.negative_label_evaluations)
         ][:10],

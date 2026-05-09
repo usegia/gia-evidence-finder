@@ -47,6 +47,7 @@ def test_competitor_evaluation_reports_three_axes_for_local_baselines() -> None:
     assert payload["unavailable"] == {}
     assert "mrr" in typed
     assert "decision_accuracy" in typed
+    assert "evidence_decision_accuracy" in typed
     assert "contradiction_supported_top1_rate" in typed
     assert "support_precision" in typed
 
@@ -83,4 +84,5 @@ def test_markdown_report_groups_axes() -> None:
 
     assert "### Retrieval" in markdown
     assert "### Decision" in markdown
+    assert "evidence_decision_accuracy" in markdown
     assert "### Safety" in markdown

@@ -249,6 +249,13 @@ def test_evaluation_report_tracks_special_negative_false_support(
     assert not contradiction_case.labeled_top1
     assert contradiction_case.supported_top1
     assert not case.diagnostic_top1
+    assert case.decision_correct
+    assert not case.evidence_decision_correct
+    assert detailed.summary.decision_accuracy == 1.0
+    assert detailed.summary.evidence_decision_accuracy == 0.0
+    assert detailed.failures == (case,)
+    assert calibration.points[0].report.decision_accuracy == 1.0
+    assert calibration.points[0].report.evidence_decision_accuracy == 0.0
     assert low_threshold_report.supported_top1_rate == 1.0
     assert high_threshold_report.supported_top1_rate == 0.0
 

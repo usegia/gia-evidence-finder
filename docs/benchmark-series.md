@@ -88,8 +88,14 @@ uv run gia-evidence-finder export-reviewed-training-jsonl --source-dir .tmp/read
   labeled support spans.
 - `Abstain accuracy` is computed over unsupported cases that should return no
   evidence.
-- `Decision accuracy` is computed over all cases and catches false abstains on
-  supported cases as well as false supports on unsupported cases.
+- `Decision accuracy` is computed over all cases and measures only the routing
+  decision: abstain versus return support. It catches false abstains on
+  supported cases and false supports on unsupported cases, but it does not prove
+  that the returned support span is the reviewed gold evidence.
+- `Evidence decision accuracy` is the stricter product metric. Supported cases
+  pass only when the first selected support match is a reviewed support span;
+  unsupported cases pass only when the extractor abstains. Public readiness
+  claims should use this metric before `Decision accuracy`.
 - `Forbidden top-1 rate` is computed over all cases and flags when a known
   hard negative is ranked first.
 - `Forbidden supported top-1 rate` is stricter: it flags only when a known hard
@@ -104,8 +110,10 @@ uv run gia-evidence-finder export-reviewed-training-jsonl --source-dir .tmp/read
   must not be accepted as supporting evidence for the wrong claim type.
 - `--calibrate-thresholds` replays the same candidate scores across support
   thresholds and reports a best balanced point plus the full threshold table.
-  This is a diagnostic for selecting future dev-set thresholds; it does not
-  alter default extractor behavior.
+  The objective prioritizes `Evidence decision accuracy`, then routing
+  `Decision accuracy`, support top-1, abstention, false-support safety, MRR, and
+  lower-threshold tie-breaks. This is a diagnostic for selecting future dev-set
+  thresholds; it does not alter default extractor behavior.
 - The intent-aware default extractor reports its own typed labels in calibrated
   holdout runs. Threshold replay can promote ordinary score candidates for
   baselines, but it must never turn `contradicts` into support.
@@ -125,9 +133,9 @@ The deterministic intent-aware ranker must:
   `hard_readme_v1`;
 - reach `1.0` abstain accuracy on `hard_readme_v1`;
 - keep forbidden supported top-1 rate at `0.0`.
-- clear `polarity_evidence_benchmark_v1` with `1.0` decision accuracy, `1.0`
-  abstain accuracy, and `0.0` contradiction supported top-1 rate for the
-  intent-aware default extractor.
+- clear `polarity_evidence_benchmark_v1` with `1.0` evidence decision accuracy,
+  `1.0` routing decision accuracy, `1.0` abstain accuracy, and `0.0`
+  contradiction supported top-1 rate for the intent-aware default extractor.
 
 `adversarial_readme_v1` is not a pass/fail release gate yet. It is a diagnostic
 suite. Current expected behavior is to show at least one real gap so that
@@ -205,6 +213,10 @@ warnings. Current best deterministic test result is `Decision 0.9886`,
 result is seeded Modal MiniLM with typed first-stage candidates:
 `MRR 0.9774`, `R@1 0.9630`, `R@3 1.0000`, `Decision 0.9773`, and
 `Forbidden Supported 0.0000`.
+
+These historical numbers predate the explicit `Evidence decision accuracy`
+field. Re-run the reviewed holdout with the current reporter before using them
+as release or marketing evidence.
 
 The packaged Modal larger-model probes are listed with
 `gia-evidence-finder modal-reranker-probes`. On the same reviewed holdout,

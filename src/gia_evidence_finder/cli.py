@@ -1561,6 +1561,7 @@ def _experiment_payload(
         "top1_support_accuracy": experiment.report.top1_support_accuracy,
         "abstain_accuracy": experiment.report.abstain_accuracy,
         "decision_accuracy": experiment.report.decision_accuracy,
+        "evidence_decision_accuracy": experiment.report.evidence_decision_accuracy,
         "diagnostic_top1_accuracy": experiment.report.diagnostic_top1_accuracy,
         "abstain_diagnostic_top1_accuracy": (
             experiment.report.abstain_diagnostic_top1_accuracy
@@ -1615,6 +1616,7 @@ def _calibrated_experiment_payload(
 def _should_include_case_diagnostic(case: CaseEvaluation) -> bool:
     return (
         not case.decision_correct
+        or not case.evidence_decision_correct
         or case.forbidden_supported_top1
         or any(evaluation.supported_top1 for evaluation in case.negative_label_evaluations)
         or (bool(case.support_span_ids) and not case.top1_is_support)
@@ -1634,6 +1636,7 @@ def _case_evaluation_payload(case: CaseEvaluation) -> dict[str, object]:
         "top_score": case.top_score,
         "first_support_rank": case.first_support_rank,
         "decision_correct": case.decision_correct,
+        "evidence_decision_correct": case.evidence_decision_correct,
         "diagnostic_top1": case.diagnostic_top1,
         "forbidden_top1": case.forbidden_top1,
         "forbidden_supported_top1": case.forbidden_supported_top1,
@@ -1659,6 +1662,7 @@ def _calibration_point_payload(point: CalibrationPoint) -> dict[str, object]:
         "top1_support_accuracy": point.report.top1_support_accuracy,
         "abstain_accuracy": point.report.abstain_accuracy,
         "decision_accuracy": point.report.decision_accuracy,
+        "evidence_decision_accuracy": point.report.evidence_decision_accuracy,
         "diagnostic_top1_accuracy": point.report.diagnostic_top1_accuracy,
         "abstain_diagnostic_top1_accuracy": point.report.abstain_diagnostic_top1_accuracy,
         "forbidden_supported_top1_rate": point.report.forbidden_supported_top1_rate,

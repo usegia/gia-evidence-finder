@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "gia-evidence-finder"
-version = "0.1.1"
+version = "0.1.2"
 description = "Find source-backed evidence for claims"
 readme = "README.md"
 requires-python = ">=3.12"

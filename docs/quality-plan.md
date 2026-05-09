@@ -60,10 +60,14 @@ before heavier reranker experiments are added.
 
 Retrieval metrics (`MRR`, `Recall@K`, and top-1 support accuracy) are computed
 over supported cases. `Abstain accuracy` is computed over unsupported cases.
-`Decision accuracy` is computed over all cases. `Forbidden supported top-1
-rate` is the strict false-support metric for known hard negatives. Per-label
-negative reports additionally track when near-miss, contradiction, or
-insufficient-context spans are ranked first and incorrectly accepted as support.
+`Decision accuracy` is the abstain-versus-support routing metric.
+`Evidence decision accuracy` is stricter and should be treated as the product
+readiness metric: supported cases require the first selected match to be a
+reviewed support span, and unsupported cases require abstention. `Forbidden
+supported top-1 rate` is the strict false-support metric for known hard
+negatives. Per-label negative reports additionally track when near-miss,
+contradiction, or insufficient-context spans are ranked first and incorrectly
+accepted as support.
 
 Benchmark labels must not leak into the evaluated intent. Forbidden span text is
 used for evaluation and training export, not automatically as negative examples.
@@ -145,10 +149,12 @@ calibration should use its dev split and the test split should be reported
 without retuning. The sweep replays recorded candidate scores at multiple
 support thresholds, then selects the best balanced point by decision accuracy,
 top-1 support accuracy, abstention accuracy, forbidden supported top-1 rate,
-MRR, and lower-threshold tie-break. Each point also reports per-label supported
-top-1 rates for negative labels. It does not mutate benchmark labels or change
-the extractor's runtime default. Use `SupportThresholdOverrideExtractor` when a
-dev-selected threshold must be applied to a held-out split.
+MRR, and lower-threshold tie-break. Current calibration prioritizes evidence
+decision accuracy ahead of the legacy routing metric. Each point also reports
+per-label supported top-1 rates for negative labels. It does not mutate
+benchmark labels or change the extractor's runtime default. Use
+`SupportThresholdOverrideExtractor` when a dev-selected threshold must be
+applied to a held-out split.
 
 `audit-benchmark-series` is the readiness gate for dataset quality. A series
 must not be called SOTA-ready while it has too few reviewed cases, lacks
@@ -164,8 +170,8 @@ These are only starter gates. A real dataset should target:
 - `Top-1 support accuracy >= 0.85`
 - Near-miss false positives down 30-50% versus a strong local reranker
 - `Forbidden supported top-1 rate == 0.0` on frozen adversarial tests
-- `Decision accuracy >= 0.95` on frozen relation-binding tests before any
-  trained model is considered ready for the hot path
+- `Evidence decision accuracy >= 0.95` on frozen relation-binding tests before
+  any trained model is considered ready for the hot path
 
 ## Training Roadmap
 
@@ -180,11 +186,22 @@ These are only starter gates. A real dataset should target:
 4. Fine-tune small cross-encoders first, then compare larger Modal GPU
    rerankers only after the dataset grows.
 5. Preserve dev-calibrated typed support/abstain decisions unless a trained
-   model proves it can beat them on frozen decision accuracy. Raw first-stage
-   labels are too conservative; the current best hybrid uses the deterministic
-   dev threshold (`0.30` on the reviewed README split) and learned ordering.
+   model proves it can beat them on frozen evidence decision accuracy without
+   increasing false-support risk. Raw first-stage labels are too conservative;
+   the current best hybrid uses the deterministic dev threshold (`0.30` on the
+   reviewed README split) and learned ordering.
 6. Keep LLM verifiers out of the hot path. Use them for label proposals,
    benchmark audits, and low-confidence adjudication.
+
+## Shipping Model Policy
+
+Do not bundle a fine-tuned reranker into the default package path yet. A trained
+model should ship as an optional artifact only after a frozen reviewed holdout
+shows it improves `evidence_decision_accuracy` or ordering while keeping
+`forbidden_supported_top1_rate == 0.0`. The release note for that artifact must
+include the model card, artifact hash, source data provenance, dev threshold,
+test split id, unavailable competitors, and exact commands used to reproduce
+the result.
 
 ## Why A Dedicated Library
 

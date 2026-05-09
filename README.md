@@ -60,8 +60,15 @@ print(result.matches[0].span.text)
 ## CLI
 
 ```sh
-gia-evidence-finder extract README.md \
-  --claim "the project supports browser-based play"
+cat > sample.md <<'EOF'
+# README
+
+No evaluation, no search, no opening book.
+UltraChess is a browser-based chess variant playground.
+EOF
+
+gia-evidence-finder extract sample.md \
+  --claim "UltraChess is browser-based"
 ```
 
 Run the deterministic benchmark gates:
@@ -195,13 +202,26 @@ Does this source span directly support this claim?
 ```
 
 It can be used independently, or as the source-grounding layer for systems that
-turn documents, comments, record fields, READMEs, PDFs, specs, and tickets into
-reviewable claims.
+turn documents, comments, record fields, READMEs, specs, tickets, or parsed PDFs
+into reviewable claims.
+
+## Boundaries
+
+`gia evidence finder` is a per-document evidence verifier and extractor. It
+does not crawl a corpus, choose which document to search, generate claims, or
+perform PDF/OCR/HTML ingestion by itself. The package ships Markdown/plain-text
+span parsing and typed contracts; callers should convert other source formats
+into `EvidenceDocument` spans before extraction.
+
+The default path is deterministic. Optional model dependencies are for
+baselines, reranking experiments, and future hybrids, not for hidden runtime
+behavior in the core package.
 
 ## Benchmarks
 
 The benchmark suite is versioned and intentionally reports support quality,
-abstention quality, and false-support risk separately.
+abstention quality, evidence-decision quality, and false-support risk
+separately.
 
 Current benchmark coverage includes:
 
@@ -229,9 +249,25 @@ support/abstention, relation binding, negation, and numeric/date safety.
 This is not a broad public SOTA claim. Larger frozen suites and more hosted
 competitor runs are still required before making industry-wide claims.
 
+## Model Policy
+
+Do not ship a fine-tuned model as the default runtime until it beats the
+deterministic path on frozen reviewed benchmarks without increasing
+false-support risk. A model release should be a separate optional artifact with
+a model card, license review, artifact hash, training data provenance, and
+reported `evidence_decision_accuracy`, not just reranking `MRR`.
+
+The current recommended product shape is:
+
+```text
+deterministic typed support/abstain judgment by default
++ optional learned reranker for ordering after frozen holdout validation
+```
+
 See:
 
 - [`docs/benchmark-series.md`](docs/benchmark-series.md)
+- [`docs/product-readiness-2026-05-09.md`](docs/product-readiness-2026-05-09.md)
 - [`docs/model-baseline-results.md`](docs/model-baseline-results.md)
 - [`docs/domain-competitor-benchmarking.md`](docs/domain-competitor-benchmarking.md)
 - [`docs/polarity-negation-implementation-2026-05-08.md`](docs/polarity-negation-implementation-2026-05-08.md)

@@ -27,6 +27,11 @@ Retrieval metrics are computed over supported cases. Abstain accuracy is
 computed over unsupported cases. `Forbidden supported top-1` is the stricter
 false-support metric for known hard negatives.
 
+These results predate the explicit `evidence_decision_accuracy` field. Treat
+the ranking direction as useful historical evidence, but re-run frozen holdouts
+with the current reporter before using any trained model result for release
+readiness.
+
 ## `popular_readme_v1`
 
 | Experiment | MRR | R@1 | R@3 | R@5 | Top-1 Support | Forbidden Top-1 | Elapsed |

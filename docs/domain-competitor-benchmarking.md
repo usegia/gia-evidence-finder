@@ -8,7 +8,8 @@ gia evidence finder now has a first-pass benchmark and reporting structure for
 the three quality axes needed before broader SOTA claims:
 
 1. Retrieval and ranking quality.
-2. Support and abstention decision quality.
+2. Evidence decision quality, which requires selecting reviewed support spans
+   for supported cases and abstaining for unsupported cases.
 3. Safety/refusal quality for forbidden, near-miss, contradiction, and
    insufficient-context spans.
 
@@ -71,7 +72,9 @@ uv run gia-evidence-finder benchmark-competitors \
 This implementation creates the benchmark and reporting protocol. Public SOTA
 claims still require running the optional model and hosted competitors on a
 frozen test split, recording unavailable systems, and comparing all systems
-across the three axes rather than a single leaderboard.
+across the three axes rather than a single leaderboard. The headline decision
+metric should be `evidence_decision_accuracy`; `decision_accuracy` remains a
+routing diagnostic.
 
 ## Diagnostic Ranking Update
 
@@ -99,6 +102,7 @@ Current typed-default test result on `domain_evidence_benchmark_v4`:
 | Recall@1 | 1.0 |
 | Top-1 support accuracy | 1.0 |
 | Decision accuracy | 0.9659 |
+| Evidence decision accuracy | 0.9659 |
 | Abstain accuracy | 0.9091 |
 | Abstain diagnostic top-1 accuracy | 0.8182 |
 | Forbidden supported top-1 rate | 0.0 |

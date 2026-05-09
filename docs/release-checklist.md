@@ -10,7 +10,12 @@ registry.
 3. Update the version in `pyproject.toml`.
 4. Review benchmark reports for claims that are too broad for the current
    measured evidence.
-5. Ensure `.tmp/`, model outputs, downloaded source documents, virtualenvs,
+5. Confirm public claims use `evidence_decision_accuracy` for product readiness;
+   keep `decision_accuracy` described as abstain-versus-support routing.
+6. Do not bundle a fine-tuned model in the default runtime unless a frozen
+   reviewed holdout proves no regression in evidence decision accuracy or
+   false-support safety.
+7. Ensure `.tmp/`, model outputs, downloaded source documents, virtualenvs,
    caches, and build artifacts are not staged.
 
 ## Quality Gate
@@ -68,7 +73,7 @@ when repairing historical releases.
 After publishing, downstream projects should depend on the released package:
 
 ```toml
-gia-evidence-finder >= 0.1.1
+gia-evidence-finder >= 0.1.2
 ```
 
 Keep downstream claim ingestion, source attachment, and graph/index promotion
