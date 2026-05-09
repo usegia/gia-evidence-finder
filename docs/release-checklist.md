@@ -36,8 +36,8 @@ Then test a clean install from TestPyPI in a temporary environment.
 Preferred path: configure PyPI trusted publishing for this GitHub repository,
 then merge a version bump to `main`. The GitHub `Publish` workflow runs on
 every push to `main`, executes the quality gate, builds the distributions,
-checks whether the `pyproject.toml` version already exists on PyPI, and publishes
-only when that version is new.
+checks whether the `pyproject.toml` version already exists on PyPI, publishes
+only when that version is new, and creates the matching GitHub tag and release.
 
 PyPI trusted publisher settings:
 
@@ -48,8 +48,9 @@ PyPI trusted publisher settings:
 - Environment name: `pypi`
 
 If the merged version is already present on PyPI, the workflow reports a skipped
-publish instead of failing on a duplicate upload. To publish a new package, bump
-the version in `pyproject.toml` before merging.
+publish instead of failing on a duplicate upload. It does not create a GitHub
+release for already-published versions. To publish a new package, bump the
+version in `pyproject.toml` before merging.
 
 Manual token path:
 
@@ -59,10 +60,8 @@ uv publish
 
 ## Git Tag
 
-```sh
-git tag v0.1.1
-git push origin v0.1.1
-```
+The automated publish workflow creates the Git tag. Create tags manually only
+when repairing historical releases.
 
 ## Downstream Integration
 

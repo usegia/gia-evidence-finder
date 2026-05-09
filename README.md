@@ -258,7 +258,8 @@ uv build
 Publishing is automated through GitHub Actions. To publish a new PyPI release,
 bump `version` in `pyproject.toml` and merge to `main`; the `Publish` workflow
 runs the quality gate, builds the package, checks whether that version already
-exists on PyPI, and publishes only new versions through PyPI Trusted Publishing.
+exists on PyPI, publishes only new versions through PyPI Trusted Publishing, and
+creates the matching GitHub tag and release.
 
 Manual TestPyPI publishing is still useful for release candidates:
 
