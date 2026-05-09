@@ -34,7 +34,10 @@ Then test a clean install from TestPyPI in a temporary environment.
 ## PyPI
 
 Preferred path: configure PyPI trusted publishing for this GitHub repository,
-then publish from the GitHub `Publish` workflow.
+then merge a version bump to `main`. The GitHub `Publish` workflow runs on
+every push to `main`, executes the quality gate, builds the distributions,
+checks whether the `pyproject.toml` version already exists on PyPI, and publishes
+only when that version is new.
 
 PyPI trusted publisher settings:
 
@@ -42,7 +45,11 @@ PyPI trusted publisher settings:
 - Owner: `usegia`
 - Repository name: `gia-evidence-finder`
 - Workflow name: `publish.yml`
-- Environment name: leave blank unless the workflow is updated to use one
+- Environment name: `pypi`
+
+If the merged version is already present on PyPI, the workflow reports a skipped
+publish instead of failing on a duplicate upload. To publish a new package, bump
+the version in `pyproject.toml` before merging.
 
 Manual token path:
 

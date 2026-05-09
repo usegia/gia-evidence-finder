@@ -255,16 +255,15 @@ Build the package:
 uv build
 ```
 
-Publish to TestPyPI first:
+Publishing is automated through GitHub Actions. To publish a new PyPI release,
+bump `version` in `pyproject.toml` and merge to `main`; the `Publish` workflow
+runs the quality gate, builds the package, checks whether that version already
+exists on PyPI, and publishes only new versions through PyPI Trusted Publishing.
+
+Manual TestPyPI publishing is still useful for release candidates:
 
 ```sh
 uv publish --publish-url https://test.pypi.org/legacy/
-```
-
-Then publish to PyPI:
-
-```sh
-uv publish
 ```
 
 ## Repository Hygiene
