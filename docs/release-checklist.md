@@ -33,6 +33,19 @@ Then test a clean install from TestPyPI in a temporary environment.
 
 ## PyPI
 
+Preferred path: configure PyPI trusted publishing for this GitHub repository,
+then publish from the GitHub `Publish` workflow.
+
+PyPI trusted publisher settings:
+
+- PyPI project name: `gia-evidence-finder`
+- Owner: `usegia`
+- Repository name: `gia-evidence-finder`
+- Workflow name: `publish.yml`
+- Environment name: leave blank unless the workflow is updated to use one
+
+Manual token path:
+
 ```sh
 uv publish
 ```
