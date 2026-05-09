@@ -60,8 +60,8 @@ uv publish
 ## Git Tag
 
 ```sh
-git tag v0.1.0
-git push origin v0.1.0
+git tag v0.1.1
+git push origin v0.1.1
 ```
 
 ## Downstream Integration
@@ -69,7 +69,7 @@ git push origin v0.1.0
 After publishing, downstream projects should depend on the released package:
 
 ```toml
-gia-evidence-finder >= 0.1.0
+gia-evidence-finder >= 0.1.1
 ```
 
 Keep downstream claim ingestion, source attachment, and graph/index promotion
