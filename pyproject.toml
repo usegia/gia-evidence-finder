@@ -1,0 +1,99 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gia-evidence-finder"
+version = "0.1.0"
+description = "Find source-backed evidence for claims"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = []
+keywords = [
+    "claims",
+    "evidence",
+    "retrieval",
+    "source-grounding",
+    "semantic-search",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Typing :: Typed",
+]
+
+[[project.authors]]
+name = "gia"
+
+[project.optional-dependencies]
+models = [
+    "sentence-transformers>=3.3.0",
+    "transformers>=4.48.0",
+    "torch>=2.4.0",
+    "numpy>=1.26.0",
+]
+training = [
+    "accelerate>=1.1.0",
+    "datasets>=3.0.0",
+    "modal>=1.1.0",
+    "sentence-transformers>=3.3.0",
+    "transformers>=4.48.0",
+    "torch>=2.4.0",
+    "numpy>=1.26.0",
+]
+
+[project.scripts]
+gia-evidence-finder = "gia_evidence_finder.cli:main"
+
+[dependency-groups]
+dev = [
+    "mypy>=1.15.0",
+    "pytest>=8.3.5",
+    "ruff>=0.11.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+gia_evidence_finder = ["py.typed"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = ["--strict-config", "--strict-markers"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+pretty = true
+show_error_codes = true
+files = ["src", "tests"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = [
+    "A",
+    "ANN",
+    "B",
+    "C4",
+    "E",
+    "F",
+    "I",
+    "N",
+    "PT",
+    "RET",
+    "RUF",
+    "SIM",
+    "UP",
+    "W",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["S101"]
