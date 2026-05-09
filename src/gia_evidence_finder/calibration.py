@@ -168,6 +168,10 @@ def _report_at_threshold(
     decision_correct = 0
     forbidden_top1 = 0
     forbidden_supported_top1 = 0
+    diagnostic_top1 = 0
+    diagnostic_case_count = 0
+    abstain_diagnostic_top1 = 0
+    abstain_diagnostic_case_count = 0
     support_case_count = 0
     abstain_case_count = 0
     for case in cases:
@@ -196,6 +200,12 @@ def _report_at_threshold(
             forbidden_top1 += 1
         if _top_candidate_is_forbidden_support(case, threshold):
             forbidden_supported_top1 += 1
+        if _has_negative_diagnostic_label(case):
+            diagnostic_case_count += 1
+            diagnostic_top1 += int(case.diagnostic_top1)
+            if case.expect_abstain:
+                abstain_diagnostic_case_count += 1
+                abstain_diagnostic_top1 += int(case.diagnostic_top1)
     count = len(cases)
     return EvaluationReport(
         case_count=count,
@@ -208,6 +218,16 @@ def _report_at_threshold(
         top1_support_accuracy=_round_rate(top1_support, support_case_count),
         abstain_accuracy=_round_rate(abstain_correct, abstain_case_count, empty_value=1.0),
         decision_accuracy=_round_rate(decision_correct, count),
+        diagnostic_top1_accuracy=_round_rate(
+            diagnostic_top1,
+            diagnostic_case_count,
+            empty_value=1.0,
+        ),
+        abstain_diagnostic_top1_accuracy=_round_rate(
+            abstain_diagnostic_top1,
+            abstain_diagnostic_case_count,
+            empty_value=1.0,
+        ),
         forbidden_top1_rate=_round_rate(forbidden_top1, count),
         forbidden_supported_top1_rate=_round_rate(forbidden_supported_top1, count),
         negative_label_reports=_negative_label_reports_at_threshold(cases, threshold),
@@ -258,6 +278,10 @@ def _negative_label_reports_at_threshold(
                     sum(1 for evaluation in evaluations if evaluation.top1),
                     case_count,
                 ),
+                labeled_top1_rate=_round_rate(
+                    sum(1 for evaluation in evaluations if evaluation.labeled_top1),
+                    case_count,
+                ),
                 supported_top1_rate=_round_rate(
                     sum(
                         1
@@ -272,6 +296,10 @@ def _negative_label_reports_at_threshold(
             )
         )
     return tuple(reports)
+
+
+def _has_negative_diagnostic_label(case: CaseEvaluation) -> bool:
+    return any(evaluation.span_ids for evaluation in case.negative_label_evaluations)
 
 
 def _top_candidate_is_label_support(

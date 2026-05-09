@@ -157,6 +157,8 @@ def test_detailed_evaluation_report_exposes_case_diagnostics(
     assert case.first_support_rank is not None
     assert case.ranked_span_ids
     assert case.decision_correct
+    assert report.summary.diagnostic_top1_accuracy == 1.0
+    assert report.summary.abstain_diagnostic_top1_accuracy == 1.0
     assert report.failures == ((case,) if not case.top1_is_support else ())
 
 
@@ -241,9 +243,12 @@ def test_evaluation_report_tracks_special_negative_false_support(
     assert contradiction_report.case_count == 1
     assert contradiction_report.span_label_count == 1
     assert contradiction_report.top1_rate == 1.0
+    assert contradiction_report.labeled_top1_rate == 0.0
     assert contradiction_report.supported_top1_rate == 1.0
     assert contradiction_case.top1
+    assert not contradiction_case.labeled_top1
     assert contradiction_case.supported_top1
+    assert not case.diagnostic_top1
     assert low_threshold_report.supported_top1_rate == 1.0
     assert high_threshold_report.supported_top1_rate == 0.0
 

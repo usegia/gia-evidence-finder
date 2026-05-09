@@ -71,7 +71,15 @@ class EvidenceExtractor:
                     reasons=score.reasons,
                 )
             )
-        scored.sort(key=lambda match: (match.score, _granularity_sort(match.span)), reverse=True)
+        has_support = any(match.label == SupportLabel.SUPPORTS for match in scored)
+        scored.sort(
+            key=lambda match: (
+                _label_sort_priority(match.label, has_support=has_support),
+                match.score,
+                _granularity_sort(match.span),
+            ),
+            reverse=True,
+        )
         return tuple(scored[:candidate_limit])
 
     def _select_matches(
@@ -103,8 +111,10 @@ def _label_for_score(
 ) -> SupportLabel:
     if features.get("preferred_span_kind", 1.0) <= 0.0:
         return SupportLabel.REJECT
-    if _is_contradiction(features):
+    if _is_quantifier_flip(features):
         return SupportLabel.CONTRADICTS
+    if _is_only_not_trap(features):
+        return SupportLabel.NEAR_MISS
     if _is_insufficient_context(features):
         if (
             score >= intent.min_support_score * intent.near_miss_ratio
@@ -113,10 +123,8 @@ def _label_for_score(
         ):
             return SupportLabel.INSUFFICIENT_CONTEXT
         return SupportLabel.REJECT
-    if _is_only_not_trap(features):
-        if score >= intent.min_support_score * intent.near_miss_ratio:
-            return SupportLabel.NEAR_MISS
-        return SupportLabel.REJECT
+    if _is_contradiction(features):
+        return SupportLabel.CONTRADICTS
     if _is_unaligned_negative_intent(features):
         if (
             features.get("required_facet_coverage", 0.0) > 0.0
@@ -150,11 +158,7 @@ def _is_contradiction(features: Mapping[str, float]) -> bool:
             or features.get("context_similarity", 0.0) >= 0.45
         )
     )
-    quantifier_flip = (
-        features.get("quantifier_requirement_count", 0.0) > 0.0
-        and features.get("quantifier_contradiction", 0.0) > 0.0
-        and features.get("required_facet_coverage", 0.0) > 0.0
-    )
+    quantifier_flip = _is_quantifier_flip(features)
     strong_polarity_flip = (
         features.get("shared_polarity_anchor_count", 0.0) >= 2.0
         and features.get("polarity_mismatch", 0.0) >= 0.35
@@ -186,10 +190,19 @@ def _is_insufficient_context(features: Mapping[str, float]) -> bool:
     )
 
 
+def _is_quantifier_flip(features: Mapping[str, float]) -> bool:
+    return (
+        features.get("quantifier_requirement_count", 0.0) > 0.0
+        and features.get("quantifier_contradiction", 0.0) > 0.0
+        and features.get("required_facet_coverage", 0.0) > 0.0
+    )
+
+
 def _is_only_not_trap(features: Mapping[str, float]) -> bool:
-    return features.get("only_not_trap_cue", 0.0) > 0.0 and (
-        features.get("required_facet_coverage", 0.0) > 0.0
-        or features.get("direct_similarity", 0.0) >= 0.40
+    return (
+        features.get("only_not_trap_cue", 0.0) > 0.0
+        and features.get("required_facet_coverage", 0.0) > 0.0
+        and features.get("direct_similarity", 0.0) >= 0.55
     )
 
 
@@ -211,11 +224,37 @@ def _candidate_score(
     label: SupportLabel,
     features: Mapping[str, float],
 ) -> float:
-    if label != SupportLabel.CONTRADICTS:
+    if label == SupportLabel.SUPPORTS:
         return score
+    if label == SupportLabel.REJECT:
+        if features.get("preferred_span_kind", 1.0) <= 0.0:
+            return round(min(score, 0.05), 4)
+        return score
+    if label == SupportLabel.INSUFFICIENT_CONTEXT:
+        diagnostic_floor = min(
+            0.74,
+            0.28
+            + (0.14 * features.get("insufficient_context_cue", 0.0))
+            + (0.18 * features.get("missing_relation_keyword_cue", 0.0))
+            + (0.06 * features.get("relation_coverage", 0.0))
+            + (0.10 * features.get("required_facet_coverage", 0.0))
+            + (0.05 * features.get("direct_similarity", 0.0)),
+        )
+        return round(max(score, diagnostic_floor), 4)
+    if label == SupportLabel.NEAR_MISS:
+        diagnostic_floor = min(
+            0.68,
+            0.34
+            + (0.20 * features.get("only_not_trap_cue", 0.0))
+            + (0.06 * features.get("negative_similarity", 0.0))
+            + (0.15 * features.get("direct_similarity", 0.0)),
+        )
+        return round(max(score, diagnostic_floor), 4)
     diagnostic_floor = min(
-        intent.min_support_score * 0.98,
+        0.68,
         0.30
+        + (0.22 * features.get("explicit_contradiction_cue", 0.0))
+        + (0.16 * features.get("quantifier_contradiction", 0.0))
         + (0.12 * features.get("contradiction_score", 0.0))
         + (0.10 * features.get("required_facet_coverage", 0.0))
         + (0.06 * features.get("direct_similarity", 0.0)),
@@ -233,3 +272,15 @@ def _granularity_sort(span: DocumentSpan) -> int:
     if span.parent_id is not None:
         return 2
     return 1
+
+
+def _label_sort_priority(label: SupportLabel, *, has_support: bool) -> int:
+    if has_support:
+        return 1 if label == SupportLabel.SUPPORTS else 0
+    if label in {
+        SupportLabel.CONTRADICTS,
+        SupportLabel.NEAR_MISS,
+        SupportLabel.INSUFFICIENT_CONTEXT,
+    }:
+        return 1
+    return 0

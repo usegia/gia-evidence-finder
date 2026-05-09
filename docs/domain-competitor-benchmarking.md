@@ -72,3 +72,37 @@ This implementation creates the benchmark and reporting protocol. Public SOTA
 claims still require running the optional model and hosted competitors on a
 frozen test split, recording unavailable systems, and comparing all systems
 across the three axes rather than a single leaderboard.
+
+## Diagnostic Ranking Update
+
+The extractor now reports diagnostic top-1 quality separately from support
+ranking and false-support safety:
+
+- `diagnostic_top1_accuracy`: top candidate is the reviewed negative diagnostic
+  span with the expected diagnostic label across all cases that carry reviewed
+  negative labels.
+- `abstain_diagnostic_top1_accuracy`: the same metric restricted to cases where
+  the extractor should abstain.
+- `labeled_top1_rate`: per negative label, the top candidate is both the
+  reviewed span and labeled as that diagnostic type.
+
+This distinction matters because support cases often include reviewed negative
+spans as hard negatives, but those spans should not outrank true support. The
+headline diagnostic metric for refusal quality is therefore
+`abstain_diagnostic_top1_accuracy`.
+
+Current typed-default test result on `domain_evidence_benchmark_v4`:
+
+| Metric | Value |
+| --- | ---: |
+| MRR | 1.0 |
+| Recall@1 | 1.0 |
+| Top-1 support accuracy | 1.0 |
+| Decision accuracy | 0.9659 |
+| Abstain accuracy | 0.9091 |
+| Abstain diagnostic top-1 accuracy | 0.8182 |
+| Forbidden supported top-1 rate | 0.0 |
+
+The next quality target is improving contradiction and near-miss diagnostic
+specificity without reducing support ranking or increasing forbidden-supported
+top-1.

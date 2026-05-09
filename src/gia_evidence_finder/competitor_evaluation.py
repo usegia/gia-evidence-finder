@@ -300,7 +300,14 @@ def competitor_markdown_report(payload: Mapping[str, Any]) -> str:
             _axis_table(
                 "Decision",
                 experiments,
-                ("decision_accuracy", "abstain_accuracy", "support_precision", "support_recall"),
+                (
+                    "decision_accuracy",
+                    "abstain_accuracy",
+                    "diagnostic_top1_accuracy",
+                    "abstain_diagnostic_top1_accuracy",
+                    "support_precision",
+                    "support_recall",
+                ),
             )
         )
         lines.extend(
@@ -375,6 +382,8 @@ def _experiment_axis_payload(experiment: RankerExperiment) -> dict[str, object]:
             "top1_support_accuracy": report.top1_support_accuracy,
             "decision_accuracy": report.decision_accuracy,
             "abstain_accuracy": report.abstain_accuracy,
+            "diagnostic_top1_accuracy": report.diagnostic_top1_accuracy,
+            "abstain_diagnostic_top1_accuracy": report.abstain_diagnostic_top1_accuracy,
             "support_precision": support_precision,
             "support_recall": support_recall,
             "forbidden_supported_top1_rate": report.forbidden_supported_top1_rate,

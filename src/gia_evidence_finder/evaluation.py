@@ -38,6 +38,8 @@ class EvaluationReport:
     top1_support_accuracy: float
     abstain_accuracy: float
     decision_accuracy: float
+    diagnostic_top1_accuracy: float
+    abstain_diagnostic_top1_accuracy: float
     forbidden_top1_rate: float
     forbidden_supported_top1_rate: float
     negative_label_reports: tuple[NegativeLabelReport, ...] = ()
@@ -49,6 +51,7 @@ class NegativeLabelReport:
     case_count: int
     span_label_count: int
     top1_rate: float
+    labeled_top1_rate: float
     supported_top1_rate: float
 
 
@@ -57,6 +60,7 @@ class NegativeLabelEvaluation:
     label: SupportLabel
     span_ids: tuple[str, ...]
     top1: bool
+    labeled_top1: bool
     supported_top1: bool
 
 
@@ -77,6 +81,7 @@ class CaseEvaluation:
     top1_is_support: bool
     abstained: bool
     decision_correct: bool
+    diagnostic_top1: bool
     forbidden_top1: bool
     forbidden_supported_top1: bool
     negative_label_evaluations: tuple[NegativeLabelEvaluation, ...] = ()
@@ -135,6 +140,10 @@ def evaluate_suite_detailed(
     decision_correct = 0
     forbidden_top1 = 0
     forbidden_supported_top1 = 0
+    diagnostic_top1 = 0
+    diagnostic_case_count = 0
+    abstain_diagnostic_top1 = 0
+    abstain_diagnostic_case_count = 0
     support_case_count = 0
     abstain_case_count = 0
     case_evaluations: list[CaseEvaluation] = []
@@ -159,6 +168,12 @@ def evaluate_suite_detailed(
             forbidden_top1 += 1
         if case_evaluation.forbidden_supported_top1:
             forbidden_supported_top1 += 1
+        if _has_negative_diagnostic_label(case):
+            diagnostic_case_count += 1
+            diagnostic_top1 += int(case_evaluation.diagnostic_top1)
+            if case.expect_abstain:
+                abstain_diagnostic_case_count += 1
+                abstain_diagnostic_top1 += int(case_evaluation.diagnostic_top1)
     count = len(cases)
     return DetailedEvaluationReport(
         summary=EvaluationReport(
@@ -172,6 +187,16 @@ def evaluate_suite_detailed(
             top1_support_accuracy=_round_rate(top1_support, support_case_count),
             abstain_accuracy=_round_rate(abstain_correct, abstain_case_count, empty_value=1.0),
             decision_accuracy=_round_rate(decision_correct, count),
+            diagnostic_top1_accuracy=_round_rate(
+                diagnostic_top1,
+                diagnostic_case_count,
+                empty_value=1.0,
+            ),
+            abstain_diagnostic_top1_accuracy=_round_rate(
+                abstain_diagnostic_top1,
+                abstain_diagnostic_case_count,
+                empty_value=1.0,
+            ),
             forbidden_top1_rate=_round_rate(forbidden_top1, count),
             forbidden_supported_top1_rate=_round_rate(forbidden_supported_top1, count),
             negative_label_reports=_negative_label_reports(case_evaluations),
@@ -209,6 +234,7 @@ def _case_evaluation(
 ) -> CaseEvaluation:
     top_candidate = result.candidates[0] if result.candidates else None
     negative_label_evaluations = _negative_label_evaluations(case, top_candidate, ranked_ids)
+    diagnostic_top1 = any(evaluation.labeled_top1 for evaluation in negative_label_evaluations)
     return CaseEvaluation(
         case_id=case.id,
         document_id=case.document.id,
@@ -228,6 +254,7 @@ def _case_evaluation(
         top1_is_support=_has_support(ranked_ids[:1], case.support_span_ids),
         abstained=result.abstained,
         decision_correct=result.abstained == case.expect_abstain,
+        diagnostic_top1=diagnostic_top1,
         forbidden_top1=bool(ranked_ids and ranked_ids[0] in case.forbidden_span_ids),
         forbidden_supported_top1=bool(
             top_candidate is not None
@@ -249,6 +276,11 @@ def _negative_label_evaluations(
             label=label,
             span_ids=span_ids,
             top1=top_span_id in span_ids,
+            labeled_top1=bool(
+                top_candidate is not None
+                and top_candidate.span.id in span_ids
+                and top_candidate.label == label
+            ),
             supported_top1=bool(
                 top_candidate is not None
                 and top_candidate.span.id in span_ids
@@ -270,6 +302,10 @@ def _negative_label_span_ids(
     return tuple((label, span_ids_by_label[label]) for label in NEGATIVE_DIAGNOSTIC_LABELS)
 
 
+def _has_negative_diagnostic_label(case: BenchmarkCase) -> bool:
+    return any(span_ids for _label, span_ids in _negative_label_span_ids(case))
+
+
 def _negative_label_reports(
     cases: list[CaseEvaluation] | tuple[CaseEvaluation, ...],
 ) -> tuple[NegativeLabelReport, ...]:
@@ -289,6 +325,10 @@ def _negative_label_reports(
                 span_label_count=sum(len(evaluation.span_ids) for evaluation in evaluations),
                 top1_rate=_round_rate(
                     sum(1 for evaluation in evaluations if evaluation.top1),
+                    case_count,
+                ),
+                labeled_top1_rate=_round_rate(
+                    sum(1 for evaluation in evaluations if evaluation.labeled_top1),
                     case_count,
                 ),
                 supported_top1_rate=_round_rate(

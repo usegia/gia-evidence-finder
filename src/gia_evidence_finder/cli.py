@@ -1561,6 +1561,10 @@ def _experiment_payload(
         "top1_support_accuracy": experiment.report.top1_support_accuracy,
         "abstain_accuracy": experiment.report.abstain_accuracy,
         "decision_accuracy": experiment.report.decision_accuracy,
+        "diagnostic_top1_accuracy": experiment.report.diagnostic_top1_accuracy,
+        "abstain_diagnostic_top1_accuracy": (
+            experiment.report.abstain_diagnostic_top1_accuracy
+        ),
         "forbidden_top1_rate": experiment.report.forbidden_top1_rate,
         "forbidden_supported_top1_rate": experiment.report.forbidden_supported_top1_rate,
         "negative_label_reports": _negative_label_reports_payload(
@@ -1630,6 +1634,7 @@ def _case_evaluation_payload(case: CaseEvaluation) -> dict[str, object]:
         "top_score": case.top_score,
         "first_support_rank": case.first_support_rank,
         "decision_correct": case.decision_correct,
+        "diagnostic_top1": case.diagnostic_top1,
         "forbidden_top1": case.forbidden_top1,
         "forbidden_supported_top1": case.forbidden_supported_top1,
         "negative_label_evaluations": [
@@ -1637,6 +1642,7 @@ def _case_evaluation_payload(case: CaseEvaluation) -> dict[str, object]:
                 "label": evaluation.label.value,
                 "span_ids": list(evaluation.span_ids),
                 "top1": evaluation.top1,
+                "labeled_top1": evaluation.labeled_top1,
                 "supported_top1": evaluation.supported_top1,
             }
             for evaluation in case.negative_label_evaluations
@@ -1653,6 +1659,8 @@ def _calibration_point_payload(point: CalibrationPoint) -> dict[str, object]:
         "top1_support_accuracy": point.report.top1_support_accuracy,
         "abstain_accuracy": point.report.abstain_accuracy,
         "decision_accuracy": point.report.decision_accuracy,
+        "diagnostic_top1_accuracy": point.report.diagnostic_top1_accuracy,
+        "abstain_diagnostic_top1_accuracy": point.report.abstain_diagnostic_top1_accuracy,
         "forbidden_supported_top1_rate": point.report.forbidden_supported_top1_rate,
         "negative_label_reports": _negative_label_reports_payload(
             point.report.negative_label_reports
@@ -1668,6 +1676,7 @@ def _negative_label_reports_payload(
             "case_count": report.case_count,
             "span_label_count": report.span_label_count,
             "top1_rate": report.top1_rate,
+            "labeled_top1_rate": report.labeled_top1_rate,
             "supported_top1_rate": report.supported_top1_rate,
         }
         for report in reports
