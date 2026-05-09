@@ -2,7 +2,6 @@
 
 Date: 2026-05-08
 Repository: `/Users/yahorbarkouski/travercedb`
-Related event log: `sota-implementation-2026-05-08-event-log.md`
 
 ## Executive Summary
 

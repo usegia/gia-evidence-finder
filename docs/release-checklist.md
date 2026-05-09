@@ -5,9 +5,8 @@ registry.
 
 ## Pre-Release
 
-1. Choose and add a project license.
-2. Confirm the public repository URL and add `[project.urls]` to
-   `pyproject.toml`.
+1. Confirm the Apache-2.0 license is still the desired public license.
+2. Confirm the public repository URL in `[project.urls]`.
 3. Update the version in `pyproject.toml`.
 4. Review benchmark reports for claims that are too broad for the current
    measured evidence.

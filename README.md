@@ -194,4 +194,4 @@ to `.tmp/` by default, and `.tmp/` is intentionally ignored.
 
 ## License
 
-License is not declared yet. Choose and add a license before public release.
+Apache-2.0.
