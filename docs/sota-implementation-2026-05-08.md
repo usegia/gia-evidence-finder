@@ -1,7 +1,7 @@
 # SOTA Implementation Report
 
 Date: 2026-05-08
-Repository: `/Users/yahorbarkouski/travercedb`
+Repository: `/Users/yahorbarkouski/gia/gia-evidence-finder`
 
 ## Executive Summary
 
