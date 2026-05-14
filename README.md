@@ -276,7 +276,7 @@ See:
 
 ## Development
 
-This repository uses `uv`.
+This repository uses Python 3.12 or newer and `uv`.
 
 ```sh
 uv sync --dev
@@ -285,9 +285,13 @@ uv run mypy
 uv run pytest
 ```
 
+If a moved checkout has stale virtualenv entry points, remove `.venv` and rerun
+`uv sync --dev` before using the quality gate.
+
 Build the package:
 
 ```sh
+rm -rf dist
 uv build
 ```
 
@@ -300,7 +304,9 @@ creates the matching GitHub tag and release.
 Manual TestPyPI publishing is still useful for release candidates:
 
 ```sh
-uv publish --publish-url https://test.pypi.org/legacy/
+rm -rf dist
+uv build
+uv publish --publish-url https://test.pypi.org/legacy/ dist/*
 ```
 
 ## Repository Hygiene

@@ -11,7 +11,7 @@ results. Add a new suite when the task shape changes.
 | `hard_readme_v1` | 8 | 11 supported, 5 unsupported | Paraphrases, nearby hard negatives, and no-evidence abstention cases. |
 | `adversarial_readme_v1` | 8 | 8 supported, 8 unsupported | Diagnostic polarity, unsupported-claim, and hard-near-miss cases. |
 | `relation_readme_v1` | 8 | 8 supported, 8 unsupported | Diagnostic subject/predicate/modifier binding cases where nearby true facts can form false claims. |
-| `non_readme_docs_v1` | 5 | 11 supported, 4 unsupported | Curated specs, runbooks, release notes, and issue-discussion excerpts that exercise non-README evidence extraction. |
+| `non_readme_docs_v1` | 5 | 13 supported, 2 unsupported | Curated specs, runbooks, release notes, and issue-discussion excerpts that exercise non-README evidence extraction. |
 | `polarity_negation_v1` | 5 | 12 supported, 8 unsupported | Focused polarity suite for positive claims contradicted by negated spans and negative claims supported by negated spans. |
 | `quantifier_numeric_date_v1` | 5 | 20+ reviewed | Value-level exact numeric, date, currency, percentage, duration, and version regression suite. |
 | `quantifier_binding_v2` | 1 | 24 reviewed | Role-bound date, metric, money, apartment, count, version, and range cases that reject swapped values. |
@@ -28,7 +28,7 @@ negative-capability examples.
 | `evidence_benchmark_v2` | 38 | 16 | 16 | Starter frozen split for calibration, model selection, and final no-retune reporting. |
 | `mixed_evidence_benchmark_v3` | 47 | 19 | 19 | README plus non-README frozen split for broader local regression checks. |
 | `polarity_evidence_benchmark_v1` | 9 | 8 | 3 | Focused negation, contradiction, `without`, `rejected`, and `not just` regression split. |
-| `quantifier_evidence_benchmark_v1` | 8 | 8 | 8+ | Focused value-level numeric and date regression split. |
+| `quantifier_evidence_benchmark_v1` | 9 | 6 | 5 | Focused value-level numeric and date regression split. |
 | `quantifier_binding_evidence_benchmark_v2` | 8 | 8 | 8 | Focused role-bound quantifier split for swapped-role and insufficient-context regressions. |
 
 `evidence_benchmark_v2` uses `popular_readme_v1` plus `hard_readme_v1` as the

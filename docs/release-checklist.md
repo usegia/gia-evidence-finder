@@ -25,13 +25,16 @@ uv sync --dev
 uv run ruff check .
 uv run mypy
 uv run pytest
+rm -rf dist
 uv build
 ```
 
 ## TestPyPI
 
 ```sh
-uv publish --publish-url https://test.pypi.org/legacy/
+rm -rf dist
+uv build
+uv publish --publish-url https://test.pypi.org/legacy/ dist/*
 ```
 
 Then test a clean install from TestPyPI in a temporary environment.
@@ -60,7 +63,9 @@ version in `pyproject.toml` before merging.
 Manual token path:
 
 ```sh
-uv publish
+rm -rf dist
+uv build
+uv publish dist/*
 ```
 
 ## Git Tag
@@ -73,7 +78,9 @@ when repairing historical releases.
 After publishing, downstream projects should depend on the released package:
 
 ```toml
-gia-evidence-finder >= 0.1.2
+dependencies = [
+  "gia-evidence-finder>=0.1.2",
+]
 ```
 
 Keep downstream claim ingestion, source attachment, and graph/index promotion
